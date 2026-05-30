@@ -1,0 +1,35 @@
+---
+description: ${PROJECT_NAME} 项目指南 —— 开始任何工作前先读这个
+alwaysApply: true
+---
+
+# 项目指南
+
+## 这个项目是什么？
+
+<!-- 待补充：用一段话描述项目的用途和目标用户 -->
+
+## 技术栈
+
+- 语言：Go
+- 框架：<!-- 待补充：go-zero / gin / chi / 标准库 -->
+- 数据库：<!-- 待补充：MySQL / PostgreSQL / MongoDB -->
+- 缓存：<!-- 待补充：Redis -->
+
+## 快速启动
+
+```bash
+# 待补充：填入实际命令
+go mod tidy
+go run cmd/main.go -f etc/config.yaml
+```
+
+## 核心入口
+
+| 路径 | 用途 |
+|---|---|
+| `cmd/` | 服务入口 |
+| `internal/handler/` | HTTP / RPC 处理器 |
+| `internal/logic/` | 业务逻辑 |
+| `internal/model/` | 数据模型 |
+| `etc/` | 配置 YAML |

@@ -1,0 +1,23 @@
+# 敏感文件 —— 不进人工智能工具索引
+.env
+.env.*
+*.pem
+*.key
+credentials*
+secret*
+
+# 依赖与构建产物
+node_modules/
+vendor/
+dist/
+build/
+target/
+__pycache__/
+
+# 人工智能工具会话数据（含用户对话，不应被索引）
+.codex/sessions/
+.claude/
+
+# 临时文件
+*.tmp
+*_tmp/

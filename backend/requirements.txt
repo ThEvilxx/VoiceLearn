@@ -1,0 +1,40 @@
+# Core
+langchain>=0.3.0
+langchain-community
+langchain-anthropic
+langchain-ollama
+langchain-openai
+langchain-huggingface
+langchain-text-splitters
+langchain-chroma
+langchain-experimental
+chromadb>=0.5.0
+fastapi>=0.115.0
+uvicorn[standard]
+python-multipart
+sse-starlette
+
+# Embedding
+sentence-transformers>=3.0.0
+rank-bm25
+
+# Document Processing
+pypdf>=5.0.0
+pdfplumber
+beautifulsoup4
+httpx
+
+# Database
+sqlalchemy
+aiosqlite
+
+# Speech
+faster-whisper>=1.0.0
+edge-tts>=6.1.0
+
+# Knowledge Graph
+networkx
+
+# Code Quality (dev)
+ruff>=0.8.0
+mypy>=1.13.0

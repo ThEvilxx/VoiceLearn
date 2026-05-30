@@ -1,0 +1,90 @@
+"""Document ingestion orchestration."""
+
+from __future__ import annotations
+
+import uuid
+from pathlib import Path
+
+from app.core.loader import load_file, load_url
+from app.core.splitter import split_documents
+from app.core.vector_store import get_vector_store
+
+
+async def ingest_file(file_path: Path | str, original_name: str) -> dict:
+    """Ingest a file: load → split → embed → store in ChromaDB."""
+    path = Path(file_path)
+    file_type = path.suffix.lower().lstrip(".")
+
+    docs = load_file(path)
+    if not docs:
+        return {"status": "error", "message": "No content extracted"}
+
+    chunks = split_documents(docs)
+    doc_id = str(uuid.uuid4())
+
+    for chunk in chunks:
+        chunk.metadata["document_id"] = doc_id
+        chunk.metadata["source"] = original_name
+
+    store = get_vector_store()
+    store.add_documents(chunks)
+
+    return {
+        "status": "ready",
+        "document_id": doc_id,
+        "name": original_name,
+        "file_type": file_type,
+        "chunk_count": len(chunks),
+    }
+
+
+async def ingest_url(url: str) -> dict:
+    """Ingest a web page."""
+    docs = load_url(url)
+    if not docs:
+        return {"status": "error", "message": "No content extracted from URL"}
+
+    chunks = split_documents(docs)
+    doc_id = str(uuid.uuid4())
+
+    for chunk in chunks:
+        chunk.metadata["document_id"] = doc_id
+
+    store = get_vector_store()
+    store.add_documents(chunks)
+
+    return {
+        "status": "ready",
+        "document_id": doc_id,
+        "name": url,
+        "file_type": "web",
+        "chunk_count": len(chunks),
+    }
+
+
+def list_documents() -> list[dict]:
+    """List all ingested documents with chunk counts."""
+    store = get_vector_store()
+    results = store.get()
+    doc_map: dict[str, dict] = {}
+
+    for meta in results.get("metadatas", []):
+        if not meta:
+            continue
+        did = meta.get("document_id", "")
+        if did not in doc_map:
+            doc_map[did] = {
+                "id": did,
+                "name": meta.get("source", "unknown"),
+                "file_type": meta.get("file_type", "unknown"),
+                "chunk_count": 0,
+            }
+        doc_map[did]["chunk_count"] += 1
+
+    return list(doc_map.values())
+
+
+def delete_document(doc_id: str) -> None:
+    """Delete a document and its vector chunks."""
+    store = get_vector_store()
+    store.delete(where={"document_id": doc_id})

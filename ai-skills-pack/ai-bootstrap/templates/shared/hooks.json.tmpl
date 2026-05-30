@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeFileWrite": [
+      {
+        "name": "敏感信息护栏",
+        "description": "写入疑似密钥文件前触发审批或拒绝",
+        "patterns": [
+          "\\.env$",
+          "\\.env\\.local$",
+          "\\.env\\.production$",
+          "credentials",
+          "secret",
+          "\\.pem$",
+          "\\.key$"
+        ],
+        "action": "require_approval",
+        "message": "即将写入可能包含敏感信息的文件。请人工确认文件是否允许进入当前工作区。"
+      },
+      {
+        "name": "人工智能运行时护栏",
+        "description": "禁止直接修改人工智能运行时配置，要求先改事实主源",
+        "patterns": [
+          "^\\.cursor/rules/",
+          "^\\.cursor/skills/",
+          "^\\.cursor/hooks\\.json$",
+          "^\\.cursor/hooks/",
+          "^\\.claude/settings\\.json$",
+          "^\\.claude/hooks/",
+          "^\\.codex/skills/",
+          "^\\.agents/skills/"
+        ],
+        "action": "deny",
+        "message": "人工智能运行时文件禁止直接编辑。请先修改受控主源，再通过渲染/同步流程更新运行时。"
+      },
+      {
+        "name": "生成文件护栏",
+        "description": "禁止直接修改代码生成目录",
+        "patterns": [
+          "/handler/",
+          "/types/",
+          "/server/",
+          "/generated/"
+        ],
+        "action": "deny",
+        "message": "目标文件看起来是生成产物。请修改协议、模板或生成源头后重新生成。"
+      }
+    ],
+    "afterFileWrite": [
+      {
+        "name": "Go 自动格式化",
+        "description": "Go 文件写入后自动格式化",
+        "patterns": [
+          "\\.go$"
+        ],
+        "action": "run",
+        "command": "gofmt -w ${file}"
+      }
+    ],
+    "beforeCommit": [
+      {
+        "name": "敏感信息模式扫描",
+        "description": "提交前扫描常见密钥模式",
+        "patterns": [
+          "AKIA[0-9A-Z]{16}",
+          "ghp_[a-zA-Z0-9]{36}",
+          "glpat-[a-zA-Z0-9\\-]{20}",
+          "xoxb-[0-9]{10,13}-[a-zA-Z0-9]{24}",
+          "sk-[a-zA-Z0-9]{48}",
+          "-----BEGIN (RSA |EC )?PRIVATE KEY-----"
+        ],
+        "action": "block",
+        "message": "检测到疑似密钥/凭证模式，已阻止提交。请检查并移除敏感信息。"
+      },
+      {
+        "name": "必要校验",
+        "description": "提交前运行项目定义的快速校验",
+        "action": "run",
+        "commands": [
+          "go test ./...",
+          "npm test",
+          "python -m pytest"
+        ],
+        "message": "校验失败时阻止提交；请按项目实际技术栈保留适用命令。"
+      }
+    ]
+  }
+}
