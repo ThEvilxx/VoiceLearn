@@ -37,5 +37,6 @@ async def upload_document(file: UploadFile):
 
 @router.delete("/{doc_id}")
 async def remove_document(doc_id: str):
-    delete_document(doc_id)
+    if not delete_document(doc_id):
+        raise HTTPException(status_code=404, detail=f"Document {doc_id} not found")
     return {"status": "deleted", "document_id": doc_id}

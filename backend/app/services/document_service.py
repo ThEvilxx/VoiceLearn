@@ -13,14 +13,13 @@ from app.core.vector_store import get_vector_store
 async def ingest_file(file_path: Path | str, original_name: str) -> dict:
     """Ingest a file: load → split → embed → store in ChromaDB."""
     path = Path(file_path)
-    file_type = path.suffix.lower().lstrip(".")
-
     docs = load_file(path)
     if not docs:
         return {"status": "error", "message": "No content extracted"}
 
     chunks = split_documents(docs)
     doc_id = str(uuid.uuid4())
+    file_type = docs[0].metadata.get("file_type", path.suffix.lower().lstrip("."))
 
     for chunk in chunks:
         chunk.metadata["document_id"] = doc_id
@@ -78,13 +77,18 @@ def list_documents() -> list[dict]:
                 "name": meta.get("source", "unknown"),
                 "file_type": meta.get("file_type", "unknown"),
                 "chunk_count": 0,
+                "status": "ready",
             }
         doc_map[did]["chunk_count"] += 1
 
     return list(doc_map.values())
 
 
-def delete_document(doc_id: str) -> None:
-    """Delete a document and its vector chunks."""
+def delete_document(doc_id: str) -> bool:
+    """Delete a document and its vector chunks. Returns True if deleted."""
     store = get_vector_store()
+    before_count = store.get(where={"document_id": doc_id}).get("ids", [])
+    if not before_count:
+        return False
     store.delete(where={"document_id": doc_id})
+    return True
