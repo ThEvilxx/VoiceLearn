@@ -21,6 +21,9 @@ When answering:
 5. Answer in the same language as the student's question.
 6. When citing from the context, mention which source document the information comes from.
 
+Conversation history between you and the student:
+{history}
+
 Context from the student's learning materials:
 {context}"""
 

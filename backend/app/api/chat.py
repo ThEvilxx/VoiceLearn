@@ -22,23 +22,28 @@ class VoiceRequest(BaseModel):
 
 @router.post("")
 async def chat_text(req: ChatRequest):
-    """Text-based RAG chat."""
+    """Text-based RAG chat with conversation memory."""
     if not req.question.strip():
-        return {"answer": "Please enter a question.", "sources": []}
+        return {"answer": "Please enter a question.", "sources": [], "conversation_id": ""}
 
-    answer, sources = await generate_answer(
+    answer, sources, conv_id = await generate_answer(
         req.question,
+        conversation_id=req.conversation_id,
         top_k=req.top_k,
         use_hybrid=req.use_hybrid,
     )
     return {
         "answer": answer,
         "sources": [s.model_dump() for s in sources],
+        "conversation_id": conv_id,
     }
 
 
 @router.post("/voice")
-async def chat_voice(request: Request):
+async def chat_voice(
+    request: Request,
+    conversation_id: str | None = None,
+):
     """Voice-based RAG chat.
 
     Accepts audio bytes (multipart or raw), runs ASR → RAG → TTS,
@@ -55,7 +60,9 @@ async def chat_voice(request: Request):
         return {"error": "Could not transcribe audio. Please try again."}
 
     # Step 2: RAG
-    answer, sources = await generate_answer(question)
+    answer, sources, conv_id = await generate_answer(
+        question, conversation_id=conversation_id
+    )
 
     # Step 3: TTS
     audio = await synthesize(answer)
@@ -63,6 +70,7 @@ async def chat_voice(request: Request):
     return {
         "question": question,
         "answer": answer,
+        "conversation_id": conv_id,
         "audio_base64": _to_base64(audio) if audio else None,
         "sources": [s.model_dump() for s in sources],
     }
@@ -73,11 +81,13 @@ async def chat_text_stream(req: ChatRequest):
     """Text-based RAG chat with SSE streaming."""
 
     async def event_stream():
-        answer, sources = await generate_answer(
+        answer, sources, conv_id = await generate_answer(
             req.question,
+            conversation_id=req.conversation_id,
             top_k=req.top_k,
             use_hybrid=req.use_hybrid,
         )
+        yield {"event": "conversation_id", "data": conv_id}
         yield {
             "event": "sources",
             "data": json.dumps([s.model_dump() for s in sources], ensure_ascii=False),
@@ -91,11 +101,14 @@ async def chat_text_stream(req: ChatRequest):
 
 
 @router.post("/voice/stream")
-async def chat_voice_stream(request: Request):
+async def chat_voice_stream(
+    request: Request,
+    conversation_id: str | None = None,
+):
     """Voice chat with SSE streaming.
 
-    Returns events: 'question' (ASR text), 'sources', 'message' (answer),
-    and 'audio' (TTS base64).
+    Returns events: 'conversation_id', 'question' (ASR text), 'sources',
+    'message' (answer), and 'audio' (TTS base64).
     """
     audio_bytes: bytes = await request.body()
 
@@ -109,7 +122,10 @@ async def chat_voice_stream(request: Request):
         yield {"event": "question", "data": question}
 
         # RAG
-        answer, sources = await generate_answer(question)
+        answer, sources, conv_id = await generate_answer(
+            question, conversation_id=conversation_id
+        )
+        yield {"event": "conversation_id", "data": conv_id}
         yield {
             "event": "sources",
             "data": json.dumps([s.model_dump() for s in sources], ensure_ascii=False),

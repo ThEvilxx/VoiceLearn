@@ -10,9 +10,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api import chat, documents, knowledge_graph, settings
+from app.api import chat, conversations, documents, knowledge_graph, settings
 from app.config import settings as app_settings
 from app.core.embeddings import get_embeddings
+from app.db import models as _db_models  # noqa: F401 — register ORM tables
+from app.db.database import init_db
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -26,6 +28,10 @@ async def lifespan(app: FastAPI):
     app_settings.data_dir.mkdir(parents=True, exist_ok=True)
     app_settings.chroma_dir.mkdir(parents=True, exist_ok=True)
     app_settings.upload_dir.mkdir(parents=True, exist_ok=True)
+
+    logger.info("Initializing database tables...")
+    await init_db()
+    logger.info("Database tables ready.")
 
     logger.info("Loading embedding model (%s)...", app_settings.embedding_model)
     get_embeddings()
@@ -50,6 +56,7 @@ app.add_middleware(
 )
 
 app.include_router(chat.router)
+app.include_router(conversations.router)
 app.include_router(documents.router)
 app.include_router(knowledge_graph.router)
 app.include_router(settings.router)

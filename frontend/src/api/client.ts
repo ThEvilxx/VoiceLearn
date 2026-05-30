@@ -1,4 +1,11 @@
-import type { ChatResponse, DocumentInfo, GraphData, VoiceResponse } from "../types";
+import type {
+  ChatResponse,
+  ConversationDetail,
+  ConversationMeta,
+  DocumentInfo,
+  GraphData,
+  VoiceResponse,
+} from "../types";
 
 const BASE = "/api";
 
@@ -31,23 +38,46 @@ export async function deleteDocument(id: string): Promise<void> {
 
 export async function textChat(
   question: string,
+  conversation_id?: string | null,
 ): Promise<ChatResponse> {
   return request<ChatResponse>("/chat", {
     method: "POST",
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, conversation_id }),
   });
 }
 
 export async function voiceChat(
   audioBlob: Blob,
+  conversation_id?: string | null,
 ): Promise<VoiceResponse> {
-  const res = await fetch(`${BASE}/chat/voice`, {
+  const url = conversation_id
+    ? `${BASE}/chat/voice?conversation_id=${conversation_id}`
+    : `${BASE}/chat/voice`;
+  const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "audio/webm" },
     body: audioBlob,
   });
   if (!res.ok) throw new Error(`Voice chat failed: ${res.status}`);
   return res.json() as Promise<VoiceResponse>;
+}
+
+export async function listConversations(): Promise<ConversationMeta[]> {
+  return request<ConversationMeta[]>("/conversations");
+}
+
+export async function createConversation(): Promise<{ conversation_id: string }> {
+  return request("/conversations", { method: "POST" });
+}
+
+export async function getConversation(
+  id: string,
+): Promise<ConversationDetail> {
+  return request<ConversationDetail>(`/conversations/${id}`);
+}
+
+export async function deleteConversation(id: string): Promise<void> {
+  await fetch(`${BASE}/conversations/${id}`, { method: "DELETE" });
 }
 
 export async function getGraph(): Promise<GraphData> {

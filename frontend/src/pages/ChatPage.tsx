@@ -1,57 +1,104 @@
 import { useCallback, useState } from "react";
 import type { ChatMessage } from "../types";
-import { textChat, voiceChat } from "../api/client";
+import { getConversation, textChat, voiceChat } from "../api/client";
 import { ChatInput } from "../components/ChatPanel/ChatInput";
 import { ChatWindow } from "../components/ChatPanel/ChatWindow";
 import { VoiceButton } from "../components/ChatPanel/VoiceButton";
 
-export function ChatPage() {
+interface ChatPageProps {
+  activeConvId: string | null;
+  onConvChange: (id: string) => void;
+}
+
+export function ChatPage({ activeConvId, onConvChange }: ChatPageProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadedConvId, setLoadedConvId] = useState<string | null>(null);
 
-  const handleText = useCallback(async (text: string) => {
-    setMessages((prev) => [...prev, { role: "user", text }]);
-    setLoading(true);
+  const loadConversation = useCallback(async (id: string) => {
     try {
-      const res = await textChat(text);
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", text: res.answer, sources: res.sources },
-      ]);
+      const detail = await getConversation(id);
+      const msgs: ChatMessage[] = detail.messages.map((m) => ({
+        role: m.role as "user" | "assistant",
+        text: m.content,
+      }));
+      setMessages(msgs);
+      setLoadedConvId(id);
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", text: "Sorry, something went wrong. Please try again." },
-      ]);
-    } finally {
-      setLoading(false);
+      setMessages([]);
     }
   }, []);
 
-  const handleVoice = useCallback(async (blob: Blob) => {
-    setLoading(true);
-    try {
-      const res = await voiceChat(blob);
-      const msgs: ChatMessage[] = [];
-      if (res.question) {
-        msgs.push({ role: "user", text: res.question });
+  // Reload when activeConvId changes
+  if (activeConvId !== loadedConvId) {
+    if (activeConvId) {
+      loadConversation(activeConvId);
+    } else {
+      setMessages([]);
+      setLoadedConvId(null);
+    }
+  }
+
+  const handleText = useCallback(
+    async (text: string) => {
+      setMessages((prev) => [...prev, { role: "user", text }]);
+      setLoading(true);
+      try {
+        const res = await textChat(text, loadedConvId);
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", text: res.answer, sources: res.sources },
+        ]);
+        if (res.conversation_id && res.conversation_id !== loadedConvId) {
+          setLoadedConvId(res.conversation_id);
+          onConvChange(res.conversation_id);
+        }
+      } catch {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            text: "Sorry, something went wrong. Please try again.",
+          },
+        ]);
+      } finally {
+        setLoading(false);
       }
-      msgs.push({
-        role: "assistant",
-        text: res.answer,
-        sources: res.sources,
-        audioBase64: res.audio_base64,
-      });
-      setMessages((prev) => [...prev, ...msgs]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", text: "Sorry, voice processing failed." },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    [loadedConvId, onConvChange],
+  );
+
+  const handleVoice = useCallback(
+    async (blob: Blob) => {
+      setLoading(true);
+      try {
+        const res = await voiceChat(blob, loadedConvId);
+        const msgs: ChatMessage[] = [];
+        if (res.question) {
+          msgs.push({ role: "user", text: res.question });
+        }
+        msgs.push({
+          role: "assistant",
+          text: res.answer,
+          sources: res.sources,
+          audioBase64: res.audio_base64,
+        });
+        setMessages((prev) => [...prev, ...msgs]);
+        if (res.conversation_id && res.conversation_id !== loadedConvId) {
+          setLoadedConvId(res.conversation_id);
+          onConvChange(res.conversation_id);
+        }
+      } catch {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", text: "Sorry, voice processing failed." },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loadedConvId, onConvChange],
+  );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>

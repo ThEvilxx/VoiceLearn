@@ -22,3 +22,4 @@ class SourceDocument(BaseModel):
 class ChatResponse(BaseModel):
     answer: str
     sources: list[SourceDocument]
+    conversation_id: str

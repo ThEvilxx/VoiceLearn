@@ -1,3 +1,15 @@
+export interface ConversationMeta {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConversationDetail {
+  conversation_id: string;
+  messages: { role: string; content: string; created_at: string }[];
+}
+
 export interface DocumentInfo {
   id: string;
   name: string;
@@ -16,11 +28,13 @@ export interface SourceDocument {
 export interface ChatResponse {
   answer: string;
   sources: SourceDocument[];
+  conversation_id: string;
 }
 
 export interface VoiceResponse {
   question: string;
   answer: string;
+  conversation_id: string;
   audio_base64?: string;
   sources: SourceDocument[];
 }
