@@ -23,6 +23,9 @@ class VoiceRequest(BaseModel):
 @router.post("")
 async def chat_text(req: ChatRequest):
     """Text-based RAG chat."""
+    if not req.question.strip():
+        return {"answer": "Please enter a question.", "sources": []}
+
     answer, sources = await generate_answer(
         req.question,
         top_k=req.top_k,

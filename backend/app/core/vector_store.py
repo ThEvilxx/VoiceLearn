@@ -64,7 +64,7 @@ def search_hybrid(
     dense_results = store.similarity_search_with_relevance_scores(query, k=search_k)
 
     # Sparse (BM25) search
-    all_docs = [doc.page_content for doc in store.get().get("documents", [])]
+    all_docs: list[str] = store.get().get("documents", [])
     if not all_docs:
         return [(doc, score) for doc, score in dense_results[:k]]
 
