@@ -6,12 +6,15 @@ Extracts triples (entity-relation-entity) from documents.
 from __future__ import annotations
 
 import json
+import logging
 
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
 from app.core.llm import get_llm_for_extraction
+
+logger = logging.getLogger(__name__)
 
 EXTRACTION_PROMPT = """Extract entities and their relationships from the text below. \
 Output valid JSON only.
@@ -43,7 +46,7 @@ async def extract_triples(text: str) -> dict:
     prompt = ChatPromptTemplate.from_messages([("human", EXTRACTION_PROMPT)])
     chain = prompt | llm | StrOutputParser()
 
-    result = await chain.ainvoke({"text": text[:4000]})
+    result = await chain.ainvoke({"text": text[:8000]})
     result = result.strip()
 
     if result.startswith("```"):
@@ -54,7 +57,8 @@ async def extract_triples(text: str) -> dict:
 
     try:
         return json.loads(result)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        logger.warning("KG extraction JSON parse failed: %s, result[:200]=%s", e, result[:200])
         return {"entities": [], "relations": []}
 
 

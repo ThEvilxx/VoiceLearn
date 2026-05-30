@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 
 import networkx as nx
 from langchain_core.documents import Document
@@ -11,6 +12,8 @@ from app.config import settings
 from app.core.kg_extractor import extract_from_documents
 from app.core.vector_store import get_vector_store
 from app.models.graph import EntityDetail, GraphData, GraphEdge, GraphNode
+
+logger = logging.getLogger(__name__)
 
 KG_FILE = settings.data_dir / "knowledge_graph.json"
 
@@ -77,7 +80,6 @@ def get_entity_detail(entity_id: str) -> EntityDetail | None:
 
 
 async def build_graph() -> dict:
-    graph = _load_graph()
     store = get_vector_store()
     results = store.get()
 
@@ -85,6 +87,18 @@ async def build_graph() -> dict:
     for meta in results.get("metadatas", []):
         if meta and "document_id" in meta:
             doc_ids.add(meta["document_id"])
+
+    graph = _load_graph()
+
+    # Clean orphan nodes whose documents have been deleted
+    nodes_to_remove: list[str] = []
+    for nid in graph.nodes:
+        node_docs = set(graph.nodes[nid].get("document_ids", []))
+        if not node_docs or not node_docs.intersection(doc_ids):
+            nodes_to_remove.append(nid)
+    if nodes_to_remove:
+        graph.remove_nodes_from(nodes_to_remove)
+        logger.info("Cleaned %d orphan nodes from knowledge graph", len(nodes_to_remove))
 
     for doc_id in doc_ids:
         already_processed = any(
