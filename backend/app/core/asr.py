@@ -10,6 +10,16 @@ from pathlib import Path
 
 from app.config import settings
 
+BLACKLIST = (
+    "谢谢观看",
+    "字幕由",
+    "感谢观看",
+    "请订阅",
+    "一键三连",
+    "点赞投币",
+    "关注",
+)
+
 _model: object | None = None
 _model_size: str = ""
 
@@ -44,8 +54,11 @@ def transcribe(audio_bytes: bytes) -> str:
 
     try:
         segments, _info = model.transcribe(str(tmp_path), beam_size=5)  # type: ignore[union-attr]
-        text = " ".join(seg.text.strip() for seg in segments)
-        return text.strip()
+        text = " ".join(seg.text.strip() for seg in segments).strip()
+        for phrase in BLACKLIST:
+            if phrase in text:
+                return ""
+        return text
     except Exception:
         return ""
     finally:
