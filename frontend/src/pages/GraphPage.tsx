@@ -81,7 +81,13 @@ export function GraphPage() {
             cursor: "pointer",
           }}
         >
-          {loading ? "Building..." : "Refresh Graph"}
+          {loading ? (
+            <>
+              <span className="spinner" /> Building...
+            </>
+          ) : (
+            "Refresh Graph"
+          )}
         </button>
       </div>
       <p style={{ color: "#666", marginBottom: "1rem" }}>

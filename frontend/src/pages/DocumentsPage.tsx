@@ -63,7 +63,13 @@ export function DocumentsPage() {
           fontSize: "0.95rem",
         }}
       >
-        {uploading ? "Uploading..." : "Upload Document"}
+        {uploading ? (
+          <>
+            <span className="spinner" /> Uploading...
+          </>
+        ) : (
+          "Upload Document"
+        )}
         <input
           type="file"
           accept=".pdf,.md,.txt,.py,.js,.ts,.tsx,.jsx,.go,.rs,.java,.cpp,.c"

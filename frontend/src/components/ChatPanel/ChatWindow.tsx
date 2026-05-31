@@ -118,7 +118,7 @@ export function ChatWindow({ messages, loading }: ChatWindowProps) {
           key={i}
           style={{
             alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
-            maxWidth: "75%",
+            maxWidth: "85%",
             padding: "0.7rem 1rem",
             borderRadius: 12,
             background: msg.role === "user" ? "#4a90d9" : "#f0f0f0",
