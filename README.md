@@ -177,8 +177,8 @@ VoiceLearn/
 │   │   └── types/                # TypeScript 类型
 │   └── ...
 ├── docs/
-│   ├── demo.md                   # 课程项目文档
-│   └── plans/                    # 分阶段实现计划
+│   ├── demo.md                        # 课程项目文档
+│   └── pdf-extraction-analysis.md     # PDF 提取能力分析
 ├── CLAUDE.md                     # AI 协作宪法
 ├── Makefile                      # 一键启动/安装/检查
 └── README.md
