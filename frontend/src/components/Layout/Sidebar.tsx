@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import type { ConversationMeta } from "../../types";
 import { deleteConversation, listConversations } from "../../api/client";
 
@@ -17,6 +17,7 @@ interface SidebarProps {
 
 export function Sidebar({ activeConvId, onConvSelect, refreshKey }: SidebarProps) {
   const [convs, setConvs] = useState<ConversationMeta[]>([]);
+  const navigate = useNavigate();
 
   const refresh = useCallback(async () => {
     try {
@@ -33,6 +34,12 @@ export function Sidebar({ activeConvId, onConvSelect, refreshKey }: SidebarProps
 
   const handleNew = async () => {
     onConvSelect(null);
+    navigate("/");
+  };
+
+  const handleConvClick = (id: string) => {
+    onConvSelect(id);
+    navigate("/");
   };
 
   const handleDelete = async (id: string) => {
@@ -108,7 +115,7 @@ export function Sidebar({ activeConvId, onConvSelect, refreshKey }: SidebarProps
                 background: c.id === activeConvId ? "#16213e" : "transparent",
                 cursor: "pointer",
               }}
-              onClick={() => onConvSelect(c.id)}
+              onClick={() => handleConvClick(c.id)}
             >
               <span
                 style={{
