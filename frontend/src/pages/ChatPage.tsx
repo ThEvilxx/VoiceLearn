@@ -14,6 +14,7 @@ export function ChatPage({ activeConvId, onConvChange }: ChatPageProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadedConvId, setLoadedConvId] = useState<string | null>(null);
+  const [mode, setMode] = useState<"voice" | "text">("text");
 
   const loadConversation = useCallback(async (id: string) => {
     try {
@@ -44,7 +45,7 @@ export function ChatPage({ activeConvId, onConvChange }: ChatPageProps) {
       setMessages((prev) => [...prev, { role: "user", text }]);
       setLoading(true);
       try {
-        const res = await textChat(text, loadedConvId);
+        const res = await textChat(text, loadedConvId, mode);
         setMessages((prev) => [
           ...prev,
           { role: "assistant", text: res.answer, sources: res.sources },
@@ -65,7 +66,7 @@ export function ChatPage({ activeConvId, onConvChange }: ChatPageProps) {
         setLoading(false);
       }
     },
-    [loadedConvId, onConvChange],
+    [loadedConvId, onConvChange, mode],
   );
 
   const handleVoice = useCallback(
@@ -109,10 +110,58 @@ export function ChatPage({ activeConvId, onConvChange }: ChatPageProps) {
           alignItems: "center",
           gap: 12,
           padding: "0 1rem 0.5rem",
+          flexWrap: "wrap",
         }}
       >
         <VoiceButton onAudioReady={handleVoice} disabled={loading} />
-        <span style={{ fontSize: "0.8rem", color: "#999" }}>or type below</span>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            background: "#eee",
+            borderRadius: 20,
+            padding: "3px 4px",
+          }}
+        >
+          <button
+            onClick={() => setMode("voice")}
+            disabled={loading}
+            style={{
+              padding: "4px 12px",
+              borderRadius: 16,
+              border: "none",
+              background: mode === "voice" ? "#4a90d9" : "transparent",
+              color: mode === "voice" ? "#fff" : "#888",
+              fontSize: "0.78rem",
+              cursor: loading ? "default" : "pointer",
+              fontWeight: mode === "voice" ? 600 : 400,
+            }}
+          >
+            🎧 语音简答
+          </button>
+          <button
+            onClick={() => setMode("text")}
+            disabled={loading}
+            style={{
+              padding: "4px 12px",
+              borderRadius: 16,
+              border: "none",
+              background: mode === "text" ? "#4a90d9" : "transparent",
+              color: mode === "text" ? "#fff" : "#888",
+              fontSize: "0.78rem",
+              cursor: loading ? "default" : "pointer",
+              fontWeight: mode === "text" ? 600 : 400,
+            }}
+          >
+            📄 深度长文
+          </button>
+        </div>
+
+        <span style={{ fontSize: "0.78rem", color: "#999" }}>
+          or type below
+        </span>
       </div>
       <ChatInput onSend={handleText} disabled={loading} />
     </div>

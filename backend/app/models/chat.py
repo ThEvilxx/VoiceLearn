@@ -10,6 +10,7 @@ class ChatRequest(BaseModel):
     conversation_id: str | None = None
     use_hybrid: bool = True
     top_k: int = 5
+    mode: str = "text"  # "voice" | "text"
 
 
 class SourceDocument(BaseModel):

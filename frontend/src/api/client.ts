@@ -39,10 +39,11 @@ export async function deleteDocument(id: string): Promise<void> {
 export async function textChat(
   question: string,
   conversation_id?: string | null,
+  mode: "voice" | "text" = "text",
 ): Promise<ChatResponse> {
   return request<ChatResponse>("/chat", {
     method: "POST",
-    body: JSON.stringify({ question, conversation_id }),
+    body: JSON.stringify({ question, conversation_id, mode }),
   });
 }
 

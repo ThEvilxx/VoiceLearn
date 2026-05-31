@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 
 from app.core.query_rewriter import rewrite_query
-from app.core.rag_chain import format_docs, qa_chain
+from app.core.rag_chain import format_docs, get_qa_chain
 from app.core.vector_store import search_hybrid, search_similar
 from app.models.chat import SourceDocument
 from app.services.conversation_service import (
@@ -27,9 +27,11 @@ async def generate_answer(
     conversation_id: str | None = None,
     top_k: int = 5,
     use_hybrid: bool = True,
+    mode: str = "text",
 ) -> tuple[str, list[SourceDocument], str]:
     """Generate an answer using RAG with conversation memory.
 
+    mode: "voice" for concise spoken answers, "text" for detailed markdown.
     Returns (answer_text, list_of_sources, conversation_id).
     """
 
@@ -63,8 +65,9 @@ async def generate_answer(
     rag_context = _build_rag_context(docs, RAG_CONTEXT_BUDGET * CHARS_PER_TOKEN)
     history_context = _truncate_history(history, HISTORY_BUDGET * CHARS_PER_TOKEN)
 
-    # Generate answer
-    answer = await qa_chain.ainvoke(
+    # Generate answer with mode-aware prompt
+    chain = get_qa_chain(mode)
+    answer = await chain.ainvoke(
         {
             "history": history_context or "(no previous conversation)",
             "context": rag_context,

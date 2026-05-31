@@ -31,6 +31,7 @@ async def chat_text(req: ChatRequest):
         conversation_id=req.conversation_id,
         top_k=req.top_k,
         use_hybrid=req.use_hybrid,
+        mode=req.mode,
     )
     return {
         "answer": answer,
@@ -59,9 +60,9 @@ async def chat_voice(
     if not question:
         return {"error": "Could not transcribe audio. Please try again."}
 
-    # Step 2: RAG
+    # Step 2: RAG (voice mode: concise spoken answers)
     answer, sources, conv_id = await generate_answer(
-        question, conversation_id=conversation_id
+        question, conversation_id=conversation_id, mode="voice"
     )
 
     # Step 3: TTS
@@ -86,6 +87,7 @@ async def chat_text_stream(req: ChatRequest):
             conversation_id=req.conversation_id,
             top_k=req.top_k,
             use_hybrid=req.use_hybrid,
+            mode=req.mode,
         )
         yield {"event": "conversation_id", "data": conv_id}
         yield {
