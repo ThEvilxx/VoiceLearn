@@ -121,21 +121,21 @@ python -c "from modelscope import snapshot_download; snapshot_download('Systran/
 ### 5. 启动
 
 ```bash
-# 开发模式：前后端热重载（需要两个终端窗口）
-make dev
-# 前端: http://localhost:5173
+# 开发模式：前后端热重载
+python start.py
 # 后端: http://127.0.0.1:8000
+# 前端: http://localhost:5173
 
 # 生产模式：单端口 serve 一切
-make prod
+python start.py --prod
 # 打开 http://127.0.0.1:8000
+
+# 或者使用 Makefile（需要 make 工具）
+make dev     # 开发模式
+make prod    # 生产模式
 ```
 
-> **Windows 快速启动**（不用 make）：
-> 打开两个终端——
-> 终端 1: `cd backend && python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`
-> 终端 2: `cd frontend && npm run dev`
-> 然后浏览器访问 `http://localhost:5173`
+> 按 `Ctrl+C` 停止所有服务。
 
 ## 项目结构
 
@@ -179,8 +179,8 @@ VoiceLearn/
 ├── docs/
 │   ├── demo.md                        # 课程项目文档
 │   └── pdf-extraction-analysis.md     # PDF 提取能力分析
-├── CLAUDE.md                     # AI 协作宪法
-├── Makefile                      # 一键启动/安装/检查
+├── start.py                      # 一键启动脚本
+├── Makefile                      # 构建入口 (可选)
 └── README.md
 ```
 

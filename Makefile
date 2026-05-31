@@ -1,3 +1,6 @@
+# VoiceLearn 构建入口
+# 推荐: python start.py (跨平台一键启动)
+# 可选: make (需要 make 工具)
 PYTHON := python
 PIP := pip
 

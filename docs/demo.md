@@ -35,7 +35,7 @@
 - **知识图谱**：LLM 自动抽取实体与关系 → vis-network 渲染为可拖拽缩放的网络图。Reload 前清理已被删除文档的孤儿节点
 - **文档管理**：支持 PDF/Word/Markdown/TXT/Python/JS/TS 等文件上传。上传时显示 spinner + 进度提示文字，完成后弹出 Toast 通知
 - **Settings 控制台**：前端切换 LLM provider（OpenAI-compatible / Claude）、更换 API Key/Model/Base URL。保存后即时生效
-- **生产部署**：`make prod` 单服务模式，一个端口 serve 前端静态文件 + 全部 REST/SSE API
+- **一键启动**：`python start.py` 同时启动前后端，`Ctrl+C` 停止；`python start.py --prod` 构建前端并走单端口生产模式
 - **侧边栏会话管理**：新建 / 切换 / 删除历史会话，点击任意会话自动跳转聊天页并恢复完整对话历史
 
 ## 6. 使用的工具
