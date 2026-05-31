@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Network } from "vis-network";
 import type { GraphData } from "../types";
 import { getGraph, reloadGraph } from "../api/client";
 
@@ -35,6 +34,7 @@ export function GraphPage() {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const networkRef = useRef<unknown>(null);
 
   const fetchGraph = useCallback(async () => {
     try {
@@ -62,28 +62,44 @@ export function GraphPage() {
     }
   };
 
-  // Render knowledge graph with hardened data-cleaning pipeline
+  // Render knowledge graph using vis-network
   useEffect(() => {
-    if (!containerRef.current || !data) return;
+    if (!containerRef.current || !data || data.nodes.length === 0) return;
 
-    if (!Array.isArray(data.nodes)) {
-      console.warn("🚨 数据就绪，但 nodes 不是数组！当前数据为:", data);
-      return;
-    }
+    console.log(
+      "[GraphPage] rendering %d nodes, %d edges",
+      data.nodes.length,
+      data.edges.length,
+    );
 
-    try {
-      // Strip all nested properties, keep only id + label as strings
+    let cancelled = false;
+
+    const renderGraph = async () => {
+      // vis-network must be imported dynamically — ESM default export
+      // is not compatible with synchronous named import in Vite.
+      const { Network } = await import("vis-network");
+      const { DataSet } = await import("vis-data");
+
+      if (cancelled || !containerRef.current) return;
+
+      // Destroy previous Network instance
+      if (networkRef.current) {
+        (networkRef.current as { destroy: () => void }).destroy();
+        networkRef.current = null;
+      }
+
+      // Strip and sanitize: keep only id + label as strings
       const safeNodes = data.nodes.map((n) => ({
         id: String(n.id),
-        label: String(n.label || n.id || "Unknown"),
+        label: String(n.label || n.id),
       }));
-
       const validIds = new Set(safeNodes.map((n) => n.id));
 
-      // Remap source/target → from/to, drop ghost edges
-      const rawEdges: Record<string, unknown>[] = data.edges as unknown as Record<string, unknown>[];
+      // Remap source/target → from/to, drop ghost edges, assign stable id
+      const rawEdges = data.edges as unknown as Record<string, unknown>[];
       const safeEdges = rawEdges
-        .map((e) => ({
+        .map((e, i) => ({
+          id: e.id ? String(e.id) : `e${i}`,
           from: String(e.from || e.source),
           to: String(e.to || e.target),
           label: e.label ? String(e.label) : undefined,
@@ -91,7 +107,10 @@ export function GraphPage() {
         }))
         .filter((e) => validIds.has(e.from) && validIds.has(e.to));
 
-      const finalData = { nodes: safeNodes, edges: safeEdges };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const nodesDs: any = new DataSet(safeNodes);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const edgesDs: any = new DataSet(safeEdges);
 
       const options = {
         nodes: {
@@ -118,14 +137,18 @@ export function GraphPage() {
         },
       };
 
-      const network = new Network(containerRef.current, finalData, options);
+      networkRef.current = new Network(
+        containerRef.current,
+        { nodes: nodesDs, edges: edgesDs },
+        options,
+      );
+    };
 
-      return () => {
-        network.destroy();
-      };
-    } catch (error) {
-      console.error("💥 vis-network 渲染时发生致命崩溃：", error);
-    }
+    renderGraph();
+
+    return () => {
+      cancelled = true;
+    };
   }, [data]);
 
   return (
@@ -174,9 +197,10 @@ export function GraphPage() {
       <div
         ref={containerRef}
         style={{
-          width: "100%",
-          height: "calc(100vh - 120px)",
-          minHeight: "400px",
+          flex: 1,
+          minHeight: 400,
+          border: "1px solid #ddd",
+          borderRadius: 8,
         }}
       />
 
