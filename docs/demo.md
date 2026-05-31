@@ -73,11 +73,26 @@
 
 每个 Phase 均在 ruff + tsc 零错误、curl/smoke 验证通过后提交。
 
-## 8. 不足与改进方向（v1.0 真实盘点）
+## 8. 已知局限与后续规划（v1.0 真实盘点）
 
-- **ASR 为 whisper-base**：中文识别存在音近字偏差（"论文"→"乐文"）和中英混杂退化（BERT→Bird），**不影响 LLM 理解**——RAG 检索 + Query 改写会自动纠偏。换 medium/large 模型仅需改一行配置，约 1.5GB/3GB 额外下载
-- **TTS 依赖外部 edge-tts**：免费但偶有网络波动。已实现优雅降级——失败时文字正常输出、TTS Markdown 标记已被代码层剥离避免朗读"星号星号"
-- **对话记忆为滑动窗口**：保留最近 10 轮，超限直接截断。sources 已跟随消息一并持久化到 SQLite，跨会话恢复完整
-- **知识图谱为手动触发**：需点击 Refresh Graph 调用 LLM 全量重建。已通过 orphan 清理保证删除文档后对应节点移除。渲染通过严格的数据清洗管道（String 强转 + ghost-edge 过滤 + source/target→from/to 映射）确保不白屏
-- **未做句子级流式 TTS**：当前 TTS 需等 LLM 全量回答后才一次性合成，语音模式延迟 3-5 秒
-- **无用户鉴权**：本地单用户模式，无登录 / 多租户隔离 / 配额管理
+### 当前局限
+
+- **ASR 为 whisper-base**：中文识别存在音近字偏差（"论文"→"乐文"）和中英混杂退化（BERT→Bird），**不影响 LLM 理解**——RAG 检索 + Query 改写会自动纠偏。换 medium/large 模型仅需改一行配置
+- **TTS 依赖外部 edge-tts**：免费但偶有网络波动。已实现优雅降级——失败时文字正常输出、TTS Markdown 标记已被代码层剥离
+- **PDF 提取使用 pypdf**：对双栏排版、跨栏图表、页眉页脚、脚注等复杂版面存在文字流交叉问题。已安装但未启用的 pdfplumber 可部分缓解。数学公式无法从 PDF 文本层提取（完整分析见 `docs/pdf-extraction-analysis.md`）
+- **知识图谱为手动触发**：需点击 Refresh Graph 调用 LLM 全量重建。已通过 orphan 清理保证删除后对应节点移除。渲染通过数据清洗管道确保不白屏
+- **对话记忆为滑动窗口**：保留最近 10 轮，sources 已跟随消息持久化到 SQLite 保证跨会话恢复
+- **未做句子级流式 TTS**：当前 TTS 需等 LLM 全量回答后才合成，语音模式延迟 3-5 秒
+- **无用户鉴权**：本地单用户模式，无登录 / 多租户 / 配额管理
+
+### 后续规划
+
+| 规划项 | 预估改动 |
+|--------|---------|
+| pypdf→pdfplumber 替换 | ~20 行 loader |
+| LaTeX 源码上传（`.tex`） | ~15 行 loader |
+| whisper 模型换 medium | 一行 .env 配置 + 模型下载 |
+| 前端 VAD | useSpeech.ts 集成 |
+| 句子级流式 TTS | chat.py 重构 |
+| 结构化文档切分 | splitter.py |
+| 知识图谱路由 | rag_chain.py 路由节点 |
