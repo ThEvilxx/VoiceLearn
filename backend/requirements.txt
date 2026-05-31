@@ -2,7 +2,6 @@
 langchain>=0.3.0
 langchain-community
 langchain-anthropic
-langchain-ollama
 langchain-openai
 langchain-huggingface
 langchain-text-splitters

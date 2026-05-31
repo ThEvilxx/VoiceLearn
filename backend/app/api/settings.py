@@ -18,8 +18,6 @@ class LLMConfig(BaseModel):
     openai_api_key: str | None = None
     openai_model: str | None = None
     openai_base_url: str | None = None
-    ollama_model: str | None = None
-    ollama_base_url: str | None = None
 
 
 class EmbeddingConfig(BaseModel):

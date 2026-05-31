@@ -107,46 +107,41 @@ export function SettingsPage() {
           >
             <option value="openai">OpenAI-compatible (DeepSeek)</option>
             <option value="claude">Claude (Anthropic)</option>
-            <option value="ollama">Ollama (local)</option>
           </select>
         </div>
 
-        {config.provider !== "ollama" && (
-          <>
-            <div style={fieldStyle}>
-              <label style={labelStyle}>API Key</label>
-              <input
-                type="password"
-                value={config.openai_api_key}
-                onChange={(e) => setConfig((c) => ({ ...c, openai_api_key: e.target.value }))}
-                placeholder="sk-... (leave empty to keep current)"
-                style={inputStyle}
-              />
-            </div>
+        <div style={fieldStyle}>
+          <label style={labelStyle}>API Key</label>
+          <input
+            type="password"
+            value={config.openai_api_key}
+            onChange={(e) => setConfig((c) => ({ ...c, openai_api_key: e.target.value }))}
+            placeholder="sk-... (leave empty to keep current)"
+            style={inputStyle}
+          />
+        </div>
 
-            <div style={fieldStyle}>
-              <label style={labelStyle}>Model</label>
-              <input
-                type="text"
-                value={config.openai_model}
-                onChange={(e) => setConfig((c) => ({ ...c, openai_model: e.target.value }))}
-                placeholder={config.provider === "openai" ? "deepseek-v4-pro" : "claude-sonnet-4-6"}
-                style={inputStyle}
-              />
-            </div>
+        <div style={fieldStyle}>
+          <label style={labelStyle}>Model</label>
+          <input
+            type="text"
+            value={config.openai_model}
+            onChange={(e) => setConfig((c) => ({ ...c, openai_model: e.target.value }))}
+            placeholder={config.provider === "openai" ? "deepseek-v4-pro" : "claude-sonnet-4-6"}
+            style={inputStyle}
+          />
+        </div>
 
-            <div style={fieldStyle}>
-              <label style={labelStyle}>Base URL</label>
-              <input
-                type="text"
-                value={config.openai_base_url}
-                onChange={(e) => setConfig((c) => ({ ...c, openai_base_url: e.target.value }))}
-                placeholder={config.provider === "openai" ? "https://api.deepseek.com/v1" : ""}
-                style={inputStyle}
-              />
-            </div>
-          </>
-        )}
+        <div style={fieldStyle}>
+          <label style={labelStyle}>Base URL</label>
+          <input
+            type="text"
+            value={config.openai_base_url}
+            onChange={(e) => setConfig((c) => ({ ...c, openai_base_url: e.target.value }))}
+            placeholder={config.provider === "openai" ? "https://api.deepseek.com/v1" : ""}
+            style={inputStyle}
+          />
+        </div>
 
         {msg && (
           <p

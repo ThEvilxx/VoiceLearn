@@ -35,10 +35,6 @@ class Settings(BaseSettings):
     claude_model: str = "claude-sonnet-4-6"
     claude_base_url: str = ""
 
-    # Ollama
-    ollama_model: str = "qwen2.5:7b"
-    ollama_base_url: str = "http://localhost:11434"
-
     # OpenAI-compatible
     openai_api_key: str = ""
     openai_model: str = "gpt-4o"
