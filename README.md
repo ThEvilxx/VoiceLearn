@@ -58,38 +58,84 @@ Upload course papers or notes, then learn by speaking — you ask with your voic
 
 ### 前置条件
 
-- Python 3.11（推荐 conda 环境）
-- Node.js 22+
-- DeepSeek 或 Claude API Key
+| 依赖 | 版本/说明 |
+|------|----------|
+| Python | **3.11**（推荐 [conda](https://docs.conda.io/en/latest/miniconda.html) / [venv](https://docs.python.org/3/library/venv.html) 虚拟环境） |
+| Node.js | **22+** (含 npm) |
+| LLM API Key | [DeepSeek](https://platform.deepseek.com/api_keys)（推荐）或 [Anthropic Claude](https://console.anthropic.com/) |
+| ModelScope | `pip install modelscope`（用于下载本地 Embedding + ASR 模型） |
 
-### 配置
+### 1. 克隆项目
+
+```bash
+git clone https://github.com/ThEvilxx/VoiceLearn.git
+cd VoiceLearn
+```
+
+### 2. 安装依赖
+
+```bash
+make install
+# 等同于:
+# cd backend && pip install -r requirements.txt && pip install modelscope
+# cd frontend && npm install
+```
+
+> Windows 用户若无可用的 `make`，请手动执行上述注释中的两条命令。
+
+### 3. 配置
 
 ```bash
 cp backend/.env.example backend/.env
-# 编辑 backend/.env，填入你的 API Key
 ```
 
-### 下载本地模型
+编辑 `backend/.env`，修改以下行：
+
+```ini
+# 方式 A：DeepSeek（推荐，国内无障碍）
+LLM_PROVIDER=openai
+OPENAI_API_KEY=sk-your-deepseek-api-key
+OPENAI_MODEL=deepseek-v4-pro
+OPENAI_BASE_URL=https://api.deepseek.com/v1
+
+# 方式 B：Anthropic Claude
+LLM_PROVIDER=claude
+ANTHROPIC_API_KEY=sk-ant-your-claude-api-key
+CLAUDE_MODEL=claude-sonnet-4-6
+```
+
+其余配置保持默认即可。
+
+### 4. 下载本地模型
 
 ```bash
-# BGE Embedding（~1.2GB）
+# BGE Embedding 模型（~1.2GB，用于文本向量化）
 python -c "from modelscope import snapshot_download; snapshot_download('BAAI/bge-large-zh-v1.5', cache_dir='backend/data/models')"
 
-# faster-whisper（~140MB）
+# faster-whisper 模型（~140MB，用于语音识别）
 python -c "from modelscope import snapshot_download; snapshot_download('Systran/faster-whisper-base', cache_dir='backend/data/models')"
 ```
 
-### 启动
+> ModelScope 镜像下载速度快（国内可达 20MB/s）。首次下载后模型缓存在 `backend/data/models/`，无需重复下载。
+
+### 5. 启动
 
 ```bash
-# 开发模式（前后端热重载）
+# 开发模式：前后端热重载（需要两个终端窗口）
 make dev
-# 浏览器打开 http://localhost:5173
+# 前端: http://localhost:5173
+# 后端: http://127.0.0.1:8000
 
-# 生产模式（单端口 serve 一切）
+# 生产模式：单端口 serve 一切
 make prod
-# 浏览器打开 http://127.0.0.1:8000
+# 打开 http://127.0.0.1:8000
 ```
+
+> **Windows 快速启动**（不用 make）：
+> 打开两个终端——
+> 终端 1: `cd backend && python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`
+> 终端 2: `cd frontend && npm run dev`
+> 然后浏览器访问 `http://localhost:5173`
 
 ## 项目结构
 

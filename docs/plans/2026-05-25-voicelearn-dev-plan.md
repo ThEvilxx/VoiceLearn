@@ -41,8 +41,8 @@ Every task must satisfy these before being marked complete:
 - [ ] **Step 1: Start backend**
 
 ```bash
-cd C:\Users\TseYinggong\Documents\VoiceLearn\backend
-C:\Users\TseYinggong\.conda\envs\ai_agent\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+cd VoiceLearn\backend
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
 Expected: Server starts. If BGE model not downloaded, it will download ~1.3GB on first run.
@@ -65,7 +65,7 @@ No `ImportError` or `FileNotFoundError` for model path.
 Common issues:
 - **BGE model download blocked (HuggingFace GFW)**: Switch to ModelScope download:
   ```bash
-  C:\Users\TseYinggong\.conda\envs\ai_agent\python.exe -c "
+  python -c "
   from modelscope import snapshot_download
   snapshot_download('BAAI/bge-large-zh-v1.5', cache_dir='backend/data/models')
   "
@@ -155,7 +155,7 @@ git commit -m "feat: text chat API working with LLM connectivity"
 - [ ] **Step 1: Start frontend dev server**
 
 ```bash
-cd C:\Users\TseYinggong\Documents\VoiceLearn\frontend
+cd VoiceLearn\frontend
 npm run dev
 ```
 
@@ -323,7 +323,7 @@ git commit -m "feat: frontend document upload and management complete"
 - [ ] **Step 1: Test faster-whisper model loads**
 
 ```bash
-C:\Users\TseYinggong\.conda\envs\ai_agent\python.exe -c "
+python -c "
 from app.core.asr import transcribe
 # Test with silence/empty — should return empty string
 result = transcribe(b'')
@@ -339,7 +339,7 @@ Expected: Whisper `base` model downloads on first run (~140MB), then prints "ASR
 Use PowerShell or browser to record a short WAV saying "what is machine learning". Then:
 
 ```bash
-C:\Users\TseYinggong\.conda\envs\ai_agent\python.exe -c "
+python -c "
 from app.core.asr import transcribe_file
 from pathlib import Path
 text = transcribe_file(Path('/tmp/test-question.wav'))
@@ -357,7 +357,7 @@ Expected: Prints the spoken text accurately.
 - [ ] **Step 1: Test TTS synthesis**
 
 ```bash
-C:\Users\TseYinggong\.conda\envs\ai_agent\python.exe -c "
+python -c "
 import asyncio
 from app.core.tts import synthesize
 
@@ -378,7 +378,7 @@ Expected: Generates MP3 bytes. Play the file to verify Chinese voice quality.
 - [ ] **Step 2: Test language auto-detection**
 
 ```bash
-C:\Users\TseYinggong\.conda\envs\ai_agent\python.exe -c "
+python -c "
 import asyncio
 from app.core.tts import synthesize, _detect_voice
 
@@ -415,7 +415,7 @@ Expected: Response contains `{"question": "...", "answer": "...", "audio_base64"
 - [ ] **Step 2: Decode and play returned audio**
 
 ```bash
-C:\Users\TseYinggong\.conda\envs\ai_agent\python.exe -c "
+python -c "
 import json, base64
 # Paste the JSON response or read from file
 data = json.loads(open('/tmp/voice-response.json').read())
@@ -631,7 +631,7 @@ git commit -m "feat: settings API read/write verified"
 - [ ] **Step 1: Build frontend**
 
 ```bash
-cd C:\Users\TseYinggong\Documents\VoiceLearn\frontend
+cd VoiceLearn\frontend
 npm run build
 ```
 
@@ -640,7 +640,7 @@ Expected: `frontend/dist/` created with compiled assets.
 - [ ] **Step 2: Test single-service startup**
 
 ```bash
-cd C:\Users\TseYinggong\Documents\VoiceLearn
+cd VoiceLearn
 make prod
 ```
 

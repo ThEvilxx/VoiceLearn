@@ -1,5 +1,5 @@
-PYTHON := C:/Users/TseYinggong/.conda/envs/ai_agent/python.exe
-PIP := C:/Users/TseYinggong/.conda/envs/ai_agent/Scripts/pip.exe
+PYTHON := python
+PIP := pip
 
 .PHONY: dev prod install install-backend install-frontend lint check clean
 
@@ -36,5 +36,22 @@ check:
 
 # 清理
 clean:
-	rm -rf backend/__pycache__ backend/app/**/__pycache__
-	rm -rf frontend/dist
+	-rm -rf backend/__pycache__ backend/app/**/\__pycache__
+	-rm -rf frontend/dist
+
+# ============================================================
+# Windows 用户注意：
+# 如果 make 命令不可用，请手动执行以下命令：
+#
+# 安装：
+#   cd backend && pip install -r requirements.txt
+#   cd frontend && npm install
+#
+# 启动开发模式（需要两个终端）：
+#   终端 1: cd backend && python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+#   终端 2: cd frontend && npm run dev
+#
+# 启动生产模式：
+#   cd frontend && npm run build
+#   cd backend && python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+# ============================================================

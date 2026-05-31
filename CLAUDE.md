@@ -16,7 +16,7 @@
 | 前端 | React 19 + TypeScript 6 + Vite 8 |
 | 知识图谱 | NetworkX + vis-network |
 | 数据库 | SQLite + SQLAlchemy (异步) |
-| Python | 3.11 (`C:\Users\TseYinggong\.conda\envs\ai_agent\python.exe`) |
+| Python | 3.11 |
 
 ## 技术栈与架构边界
 
@@ -53,9 +53,6 @@
 ## 目录与数据权限
 - **数据目录**：`backend/data/` 存放持久化数据（chroma/, uploads/）。
 - **禁止直接操作 DB**：禁止绕过应用层代码去手动篡改 ChromaDB 的底层 SQLite。
-
-**本地 Python 解释器**：`C:\Users\TseYinggong\.conda\envs\ai_agent\python.exe`
-(执行后端脚本或安装依赖时，若存在环境冲突，请优先使用此绝对路径)
 
 ## 开发与验证常规
 - Python 规范：`pathlib.Path`，类型注解 (mypy strict)，Ruff 格式化。
