@@ -9,7 +9,14 @@ node_modules/
 frontend/dist/
 frontend/tsconfig.tsbuildinfo
 
-# Screenshots / test assets
+# Development artifacts (keep locally, don't publish to GitHub)
+CLAUDE.md
+ai-skills-pack/
+docs/plans/
+docs/test.md
+docs/test2.md
+docs/test-analysis.md
+docs/test-round2.md
 docs/*.png
 
 # Data (persisted locally, not committed)
