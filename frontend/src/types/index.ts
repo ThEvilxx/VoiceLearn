@@ -7,7 +7,12 @@ export interface ConversationMeta {
 
 export interface ConversationDetail {
   conversation_id: string;
-  messages: { role: string; content: string; created_at: string }[];
+  messages: {
+    role: string;
+    content: string;
+    sources?: string | null;
+    created_at: string;
+  }[];
 }
 
 export interface DocumentInfo {

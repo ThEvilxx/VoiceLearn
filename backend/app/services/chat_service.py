@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 
 from app.core.query_rewriter import rewrite_query
@@ -110,9 +111,12 @@ async def generate_answer(
         for doc, score in zip(docs, scores, strict=True)
     ]
 
-    # Persist messages
+    # Persist messages (assistant message includes sources JSON for cross-session recall)
+    sources_json = json.dumps(
+        [s.model_dump() for s in sources], ensure_ascii=False
+    )
     await add_message(conversation_id, "user", question)
-    await add_message(conversation_id, "assistant", answer)
+    await add_message(conversation_id, "assistant", answer, sources=sources_json)
 
     return answer, sources, conversation_id
 

@@ -142,41 +142,21 @@ export function ChatWindow({ messages, loading }: ChatWindowProps) {
           )}
 
           {msg.sources && msg.sources.length > 0 && (
-            <div
-              style={{
-                marginTop: 10,
-                padding: "0.5rem 0.7rem",
-                background: "rgba(0,0,0,0.04)",
-                borderRadius: 8,
-                fontSize: "0.78rem",
-                color: "#666",
-                border: "1px solid rgba(0,0,0,0.08)",
-              }}
-            >
-              <span
-                style={{
-                  fontWeight: 600,
-                  color: "#888",
-                  fontSize: "0.72rem",
-                }}
-              >
+            <details style={{ marginTop: 8, fontSize: "0.8rem" }}>
+              <summary style={{ cursor: "pointer", opacity: 0.7 }}>
                 Sources ({msg.sources.length})
-              </span>
+              </summary>
               {msg.sources.map((s, j) => (
-                <div key={j} style={{ marginTop: 3, lineHeight: 1.45 }}>
-                  <span style={{ fontWeight: 600, color: "#777" }}>
-                    {s.document_name}
-                  </span>
-                  {" · "}
-                  <span style={{ opacity: 0.6 }}>
-                    score: {s.relevance_score.toFixed(3)}
-                  </span>
-                  <div style={{ color: "#999", marginTop: 1 }}>
+                <div key={j} style={{ marginTop: 4 }}>
+                  <div style={{ fontWeight: 600, color: "#777", marginBottom: 1 }}>
+                    {s.document_name} · score: {s.relevance_score.toFixed(3)}
+                  </div>
+                  <div style={{ color: "#999" }}>
                     "{s.content.slice(0, 180)}..."
                   </div>
                 </div>
               ))}
-            </div>
+            </details>
           )}
         </div>
       ))}

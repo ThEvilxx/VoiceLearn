@@ -19,10 +19,21 @@ export function ChatPage({ activeConvId, onConvChange }: ChatPageProps) {
   const loadConversation = useCallback(async (id: string) => {
     try {
       const detail = await getConversation(id);
-      const msgs: ChatMessage[] = detail.messages.map((m) => ({
-        role: m.role as "user" | "assistant",
-        text: m.content,
-      }));
+      const msgs: ChatMessage[] = detail.messages.map((m) => {
+        let sources = undefined;
+        if (m.sources) {
+          try {
+            sources = JSON.parse(m.sources);
+          } catch {
+            /* sources JSON corrupted, ignore */
+          }
+        }
+        return {
+          role: m.role as "user" | "assistant",
+          text: m.content,
+          sources,
+        };
+      });
       setMessages(msgs);
       setLoadedConvId(id);
     } catch {

@@ -47,13 +47,18 @@ async def get_messages(conversation_id: str) -> list[dict]:
         )
         msgs = result.scalars().all()
         return [
-            {"role": m.role, "content": m.content, "created_at": m.created_at.isoformat()}
+            {
+                "role": m.role,
+                "content": m.content,
+                "sources": m.sources,
+                "created_at": m.created_at.isoformat(),
+            }
             for m in msgs
         ]
 
 
 async def add_message(
-    conversation_id: str, role: str, content: str
+    conversation_id: str, role: str, content: str, sources: str | None = None
 ) -> None:
     async with async_session() as db:
         db.add(
@@ -61,6 +66,7 @@ async def add_message(
                 conversation_id=conversation_id,
                 role=role,
                 content=content,
+                sources=sources,
             )
         )
         await db.execute(
