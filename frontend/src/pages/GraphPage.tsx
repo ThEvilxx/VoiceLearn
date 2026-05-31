@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { Network } from "vis-network";
 import type { GraphData } from "../types";
 import { getGraph, reloadGraph } from "../api/client";
 
@@ -34,6 +35,7 @@ export function GraphPage() {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const networkRef = useRef<Network | null>(null);
 
   const fetchGraph = useCallback(async () => {
     try {
@@ -63,11 +65,23 @@ export function GraphPage() {
 
   // Render knowledge graph using vis-network
   useEffect(() => {
-    if (!data || !containerRef.current) return;
+    if (!containerRef.current || !data || !data.nodes.length) return;
+
+    // Destroy previous instance to prevent duplicate / stale render
+    if (networkRef.current) {
+      networkRef.current.destroy();
+      networkRef.current = null;
+    }
+
+    let cancelled = false;
 
     const renderGraph = async () => {
-      const { Network } = await import("vis-network");
-      const { DataSet } = await import("vis-data");
+      const [{ Network }, { DataSet }] = await Promise.all([
+        import("vis-network"),
+        import("vis-data"),
+      ]);
+
+      if (cancelled) return;
 
       const nodes = new DataSet(
         data.nodes.map((n) => ({
@@ -86,7 +100,11 @@ export function GraphPage() {
         })),
       );
 
-      new Network(containerRef.current!, { nodes, edges }, {
+      console.log("1. 图谱原始数据: ", data);
+      console.log("2. 节点第一项: ", data.nodes[0]);
+      console.log("3. 容器高度: ", containerRef.current?.clientHeight, " 宽度: ", containerRef.current?.clientWidth);
+
+      networkRef.current = new Network(containerRef.current!, { nodes, edges }, {
         nodes: { shape: "dot", size: 16, font: { size: 12 } },
         edges: { arrows: "to", font: { size: 10, align: "middle" } },
         physics: { solver: "forceAtlas2Based" },
@@ -94,6 +112,14 @@ export function GraphPage() {
     };
 
     renderGraph();
+
+    return () => {
+      cancelled = true;
+      if (networkRef.current) {
+        networkRef.current.destroy();
+        networkRef.current = null;
+      }
+    };
   }, [data]);
 
   return (
