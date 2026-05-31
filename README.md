@@ -21,13 +21,13 @@ Upload course notes or papers, then learn by speaking — you ask with your voic
 
 | 特性 | 说明 |
 |------|------|
-| 🎤 语音转文字 | 浏览器录音 → faster-whisper 本地转写 + 幻觉过滤黑名单 |
-| 🎧 / 📄 双模式回答 | **语音简答**（口语 + 字数红线 + 引导反问）\| **深度长文**（Markdown 排版 + 严格引用来源） |
-| 🔍 混合 RAG 检索 | Dense (BGE-large-zh-v1.5) + Sparse (BM25) 加权融合，支持切换 |
-| 🧠 多轮对话记忆 | SQLite 持久化 + 10 轮滑动窗口 + LLM Query 改写消解指代词 |
+| 🎤 语音转文字 | 浏览器录音 → faster-whisper 本地转写 → opencc 繁→简 → 幻觉过滤黑名单 |
+| 🎧 / 📄 双模式回答 | **语音简答**（口语 + 字数红线 + **加粗关键词** + 引导反问）\| **深度长文**（Markdown 排版 + 术语首次出现加粗 + 严格引用来源）。语音模式 TTS 自动剥离 Markdown 标记 |
+| 🔍 混合 RAG 检索 | Dense (BGE-large-zh-v1.5) + Sparse (BM25) 加权融合；检索前注入知识库文档概览使 LLM 感知完整文档清单；低相关度片段自动过滤 |
+| 🧠 多轮对话记忆 | SQLite 持久化 + sources 跟随存/读 + 10 轮滑动窗口 + LLM Query 改写消解指代词 |
 | 🔊 语音朗读 | edge-tts 中英双语自动检测，TTS 失败时文字仍正常输出 |
-| 📚 文档管理 | 上传/删除，多格式支持，向量自动索引与清理 |
-| 🕸️ 知识图谱 | LLM 自动抽取实体&关系 → vis-network 可视化，文档删后自动清理孤儿节点 |
+| 📚 文档管理 | 上传/删除，多格式支持，向量自动索引与清理；上传时 spinner + 进度提示 + Toast 通知 |
+| 🕸️ 知识图谱 | LLM 自动抽取实体&关系 → vis-network 现代化渲染（圆角节点/平滑边/箭头），文档删后自动清理孤儿节点 |
 | ⚙️ Settings 控制台 | 前端切换 LLM provider（OpenAI-compatible / Claude）、更换 API Key 和 Model |
 | 🚀 生产部署 | `make prod` 单服务模式 — 一个端口 serve 前端 + 全部 API |
 
@@ -139,8 +139,8 @@ VoiceLearn/
 
 同一套 RAG 管道，通过传入 `mode` 参数动态选择 System Prompt：
 
-- **🎧 语音模式**：字数红线 ≤100 字、结论先行、禁止朗读 source 标记、结尾抛引导式反问
-- **📄 文字模式**：Markdown 排版、结构化章节、显式引用来源
+- **🎧 语音模式**：字数红线 ≤120 字、结论先行、允许少量加粗关键词（TTS 自动剥离）、结尾抛引导式反问
+- **📄 文字模式**：Markdown 排版、术语首次出现加粗、结构化章节、显式引用来源
 
 ### 多轮对话与 Query 改写
 
@@ -152,7 +152,7 @@ Dense（BGE embedding）与 Sparse（BM25）加权融合，默认 7:3。System P
 
 ### 语音管道风控
 
-`asr.py` 维护停用词黑名单（"谢谢观看" "字幕由…" 等），过滤 Whisper 底噪幻觉。TTS 失败时返回空音频，绝不阻断文字输出流。
+`asr.py` 维护停用词黑名单 + opencc 自动繁→简转换，过滤 Whisper 底噪幻觉。语音模式下 `_strip_markdown()` 在 TTS 合成前剥离所有 Markdown 标记，确保不朗读"星号星号"。TTS 失败时返回空音频，绝不阻断文字输出流。静音录音 5 秒超时自动结束。
 
 ## 未来展望
 
@@ -168,7 +168,7 @@ Dense（BGE embedding）与 Sparse（BM25）加权融合，默认 7:3。System P
 
 ## 不足与改进方向
 
-- **TTS 依赖 edge-tts**：免费但偶有网络波动，不支持自定义语速/情感
-- **ASR 模型为 whisper-base**：中文准确率有提升空间，可换 medium/large
-- **无用户鉴权**：本地单用户模式，无登录/多租户隔离
-- **知识图谱为静态快照**：手动触发 Refresh，不感知文档增量变化
+- **ASR 模型为 whisper-base**：中文识别有音近字偏差（如"论文"→"乐文"），中英混杂时英文词倾向被映射为中文音近字。**不影响 LLM 理解**——可以通过将 `WHISPER_MODEL` 换到 medium/large 缓解，改动仅一行配置
+- **TTS 依赖 edge-tts**：免费但偶有网络波动，不提供自定义语速/情感参数。TTS 失败时已做优雅降级
+- **无用户鉴权**：本地单用户模式，无登录 / 多租户隔离 / 配额管理
+- **知识图谱为手动触发**：需点击 Refresh Graph 调用 LLM 全量重建，不感知文档增量变化。已通过 orphan 清理保证删除后对应节点移除
