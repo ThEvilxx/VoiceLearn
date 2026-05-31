@@ -30,6 +30,7 @@ aiosqlite
 # Speech
 faster-whisper>=1.0.0
 edge-tts>=6.1.0
+opencc-python-reimplemented
 
 # Knowledge Graph
 networkx

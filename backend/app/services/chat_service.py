@@ -58,6 +58,18 @@ async def generate_answer(
         await add_message(conversation_id, "assistant", answer)
         return answer, [], conversation_id
 
+    # Filter low-relevance results: if the best score is below threshold,
+    # the retrieved content is probably noise — don't feed it to the LLM
+    low_relevance_threshold = 0.25
+    if all(score < low_relevance_threshold for _, score in results):
+        answer = (
+            "I couldn't find relevant information about that in your uploaded "
+            "materials. Try asking about a topic covered in your notes or papers."
+        )
+        await add_message(conversation_id, "user", question)
+        await add_message(conversation_id, "assistant", answer)
+        return answer, [], conversation_id
+
     docs = [doc for doc, _ in results]
     scores = [score for _, score in results]
 

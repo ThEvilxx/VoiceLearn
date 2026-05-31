@@ -81,7 +81,7 @@ export function GraphPage() {
       const validIds = new Set(safeNodes.map((n) => n.id));
 
       // Remap source/target → from/to, drop ghost edges
-      const rawEdges: Record<string, unknown>[] = (data.edges || []) as any;
+      const rawEdges: Record<string, unknown>[] = data.edges as unknown as Record<string, unknown>[];
       const safeEdges = rawEdges
         .map((e) => ({
           from: String(e.from || e.source),

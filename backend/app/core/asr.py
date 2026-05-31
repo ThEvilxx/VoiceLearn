@@ -23,6 +23,17 @@ BLACKLIST = (
 _model: object | None = None
 _model_size: str = ""
 
+_converter: object | None = None
+
+
+def _get_converter() -> object:
+    global _converter
+    if _converter is None:
+        from opencc import OpenCC
+
+        _converter = OpenCC("t2s")
+    return _converter
+
 
 def _get_model() -> object:
     global _model, _model_size
@@ -58,6 +69,7 @@ def transcribe(audio_bytes: bytes) -> str:
         for phrase in BLACKLIST:
             if phrase in text:
                 return ""
+        text = _get_converter().convert(text)  # type: ignore[union-attr]
         return text
     except Exception:
         return ""

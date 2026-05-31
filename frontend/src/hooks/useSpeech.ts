@@ -54,11 +54,26 @@ export function useSpeech(): UseSpeechReturn {
   }, []);
 
   const stopRecording = useCallback((): Promise<Blob | null> => {
-    return new Promise((resolve) => {
+    const stopPromise = new Promise<Blob | null>((resolve) => {
       resolveRef.current = resolve;
       recorderRef.current?.stop();
       setIsRecording(false);
     });
+
+    const timeoutPromise = new Promise<Blob | null>((resolve) => {
+      setTimeout(() => {
+        if (resolveRef.current) {
+          resolveRef.current = null;
+          setIsRecording(false);
+          if (recorderRef.current?.state === "recording") {
+            recorderRef.current.stop();
+          }
+          resolve(null);
+        }
+      }, 5000);
+    });
+
+    return Promise.race([stopPromise, timeoutPromise]);
   }, []);
 
   return { isRecording, startRecording, stopRecording, error };

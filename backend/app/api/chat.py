@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
@@ -65,8 +66,9 @@ async def chat_voice(
         question, conversation_id=conversation_id, mode="voice"
     )
 
-    # Step 3: TTS
-    audio = await synthesize(answer)
+    # Step 3: TTS (strip Markdown so TTS doesn't read "**" aloud)
+    tts_text = _strip_markdown(answer)
+    audio = await synthesize(tts_text)
 
     return {
         "question": question,
@@ -123,9 +125,9 @@ async def chat_voice_stream(
 
         yield {"event": "question", "data": question}
 
-        # RAG
+        # RAG (voice mode: concise spoken answers)
         answer, sources, conv_id = await generate_answer(
-            question, conversation_id=conversation_id
+            question, conversation_id=conversation_id, mode="voice"
         )
         yield {"event": "conversation_id", "data": conv_id}
         yield {
@@ -134,12 +136,26 @@ async def chat_voice_stream(
         }
         yield {"event": "message", "data": answer}
 
-        # TTS
-        audio = await synthesize(answer)
+        # TTS (strip Markdown so TTS doesn't read "**" aloud)
+        tts_text = _strip_markdown(answer)
+        audio = await synthesize(tts_text)
         if audio:
             yield {"event": "audio", "data": _to_base64(audio)}
 
     return EventSourceResponse(event_stream())
+
+
+def _strip_markdown(text: str) -> str:
+    """Remove Markdown formatting tokens so TTS reads clean spoken text."""
+    text = re.sub(r"\*{1,3}([^*]+)\*{1,3}", r"\1", text)
+    text = re.sub(r"^#{1,6}\s+", "", text, flags=re.MULTILINE)
+    text = re.sub(r"^>\s+", "", text, flags=re.MULTILINE)
+    text = re.sub(r"^[-*+]\s+", "", text, flags=re.MULTILINE)
+    text = re.sub(r"^-{3,}$", "", text, flags=re.MULTILINE)
+    text = re.sub(r"`([^`]+)`", r"\1", text)
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+    text = re.sub(r"\|", " ", text)
+    return text
 
 
 def _to_base64(data: bytes) -> str:
