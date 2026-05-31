@@ -83,6 +83,32 @@ export function GraphPage() {
 
       if (cancelled) return;
 
+      console.log("1. 图谱原始数据: ", data);
+      console.log("2. 节点第一项: ", data.nodes[0]);
+      console.log("3. 容器高度: ", containerRef.current?.clientHeight, " 宽度: ", containerRef.current?.clientWidth);
+
+      // 质检：检测幽灵连线（source/target 指向不存在的节点 ID）
+      console.log("第一条连线数据:", data.edges[0]);
+
+      const nodeIds = new Set(data.nodes.map((n) => n.id));
+      const badEdges = data.edges.filter(
+        (e) => !nodeIds.has(e.source) || !nodeIds.has(e.target),
+      );
+
+      let cleanEdges = data.edges;
+      if (badEdges.length > 0) {
+        console.error(
+          "🚨 发现幽灵连线！以下连线指向了不存在的节点，这将导致 vis-network 白屏:",
+          badEdges,
+        );
+        cleanEdges = data.edges.filter(
+          (e) => nodeIds.has(e.source) && nodeIds.has(e.target),
+        );
+        console.log("✅ 自动过滤坏连线完毕，尝试重新渲染...");
+      } else {
+        console.log("✅ 所有连线质检通过，没有幽灵连线");
+      }
+
       const nodes = new DataSet(
         data.nodes.map((n) => ({
           id: n.id,
@@ -91,7 +117,7 @@ export function GraphPage() {
         })),
       );
       const edges = new DataSet(
-        data.edges.map((e) => ({
+        cleanEdges.map((e) => ({
           id: e.id,
           from: e.source,
           to: e.target,
@@ -99,10 +125,6 @@ export function GraphPage() {
           width: Math.min(e.weight * 2, 5),
         })),
       );
-
-      console.log("1. 图谱原始数据: ", data);
-      console.log("2. 节点第一项: ", data.nodes[0]);
-      console.log("3. 容器高度: ", containerRef.current?.clientHeight, " 宽度: ", containerRef.current?.clientWidth);
 
       networkRef.current = new Network(containerRef.current!, { nodes, edges }, {
         nodes: { shape: "dot", size: 16, font: { size: 12 } },
