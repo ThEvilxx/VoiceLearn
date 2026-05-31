@@ -13,6 +13,7 @@ from app.services.conversation_service import (
     build_history_context,
     create_conversation,
 )
+from app.services.document_service import list_documents
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +61,7 @@ async def generate_answer(
 
     # Filter low-relevance results: if the best score is below threshold,
     # the retrieved content is probably noise — don't feed it to the LLM
-    low_relevance_threshold = 0.25
+    low_relevance_threshold = 0.10
     if all(score < low_relevance_threshold for _, score in results):
         answer = (
             "I couldn't find relevant information about that in your uploaded "
@@ -73,8 +74,20 @@ async def generate_answer(
     docs = [doc for doc, _ in results]
     scores = [score for _, score in results]
 
+    # Inject a knowledge-base overview so the LLM knows the full document inventory
+    all_docs = list_documents()
+    kb_overview_lines = [
+        f"- {d['name']} ({d['chunk_count']} chunks)" for d in sorted(all_docs, key=lambda d: d.get("name", ""))
+    ]
+    kb_overview = (
+        f"The knowledge base currently contains {len(all_docs)} document(s):\n"
+        + "\n".join(kb_overview_lines)
+        + "\n\nBelow are the most relevant retrieved excerpts:\n"
+    )
+
     # Build RAG context with token budget
     rag_context = _build_rag_context(docs, RAG_CONTEXT_BUDGET * CHARS_PER_TOKEN)
+    rag_context = kb_overview + rag_context
     history_context = _truncate_history(history, HISTORY_BUDGET * CHARS_PER_TOKEN)
 
     # Generate answer with mode-aware prompt

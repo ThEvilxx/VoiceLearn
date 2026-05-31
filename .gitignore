@@ -9,6 +9,9 @@ node_modules/
 frontend/dist/
 frontend/tsconfig.tsbuildinfo
 
+# Screenshots / test assets
+docs/*.png
+
 # Data (persisted locally, not committed)
 backend/data/chroma/
 backend/data/uploads/
