@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Network } from "vis-network";
+import { Network } from "vis-network";
 import type { GraphData } from "../types";
 import { getGraph, reloadGraph } from "../api/client";
 
@@ -35,7 +35,6 @@ export function GraphPage() {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const networkRef = useRef<Network | null>(null);
 
   const fetchGraph = useCallback(async () => {
     try {
@@ -63,71 +62,70 @@ export function GraphPage() {
     }
   };
 
-  // Render knowledge graph using vis-network
+  // Render knowledge graph with hardened data-cleaning pipeline
   useEffect(() => {
-    // 1. 拦截空状态：没有 DOM 容器或没有节点数据，直接不执行
-    if (!containerRef.current || !data || !data.nodes || data.nodes.length === 0) {
+    if (!containerRef.current || !data) return;
+
+    if (!Array.isArray(data.nodes)) {
+      console.warn("🚨 数据就绪，但 nodes 不是数组！当前数据为:", data);
       return;
     }
 
-    // 2. 销毁旧实例，防止重入报错
-    if (networkRef.current) {
-      networkRef.current.destroy();
-      networkRef.current = null;
+    try {
+      // Strip all nested properties, keep only id + label as strings
+      const safeNodes = data.nodes.map((n) => ({
+        id: String(n.id),
+        label: String(n.label || n.id || "Unknown"),
+      }));
+
+      const validIds = new Set(safeNodes.map((n) => n.id));
+
+      // Remap source/target → from/to, drop ghost edges
+      const rawEdges: Record<string, unknown>[] = (data.edges || []) as any;
+      const safeEdges = rawEdges
+        .map((e) => ({
+          from: String(e.from || e.source),
+          to: String(e.to || e.target),
+          label: e.label ? String(e.label) : undefined,
+          font: { size: 12, align: "middle" as const },
+        }))
+        .filter((e) => validIds.has(e.from) && validIds.has(e.to));
+
+      const finalData = { nodes: safeNodes, edges: safeEdges };
+
+      const options = {
+        nodes: {
+          shape: "box" as const,
+          margin: { top: 10, right: 10, bottom: 10, left: 10 },
+          font: { size: 14, color: "#333333" },
+          color: {
+            background: "#E3F2FD",
+            border: "#2196F3",
+            highlight: { background: "#BBDEFB", border: "#1976D2" },
+          },
+          borderWidth: 2,
+          shadow: true,
+        },
+        edges: {
+          width: 1.5,
+          color: { color: "#999999", highlight: "#2196F3" },
+          arrows: { to: { enabled: true, scaleFactor: 0.5 } },
+          smooth: { enabled: true, type: "continuous" as const, roundness: 0.5 },
+        },
+        physics: {
+          barnesHut: { gravitationalConstant: -2000, springLength: 150 },
+          stabilization: { iterations: 150 },
+        },
+      };
+
+      const network = new Network(containerRef.current, finalData, options);
+
+      return () => {
+        network.destroy();
+      };
+    } catch (error) {
+      console.error("💥 vis-network 渲染时发生致命崩溃：", error);
     }
-
-    // 3. 暴力清洗节点：强制转换 id/label 为 vis-network 能识别的字符串
-    const safeNodes = data.nodes.map((n) => ({
-      ...n,
-      id: String(n.id),
-      label: String(n.label || n.id || "Unknown"),
-      group: n.type,
-    }));
-
-    const validNodeIds = new Set(safeNodes.map((n) => n.id));
-
-    // 4. 暴力清洗连线：强制映射 from/to + 强制过滤幽灵边 + 强制转字符串
-    const safeEdges = (data.edges || [])
-      .map((e) => {
-        const raw = e as unknown as Record<string, unknown>;
-        return {
-          id: raw.id as string,
-          from: String(raw.from || e.source),
-          to: String(raw.to || e.target),
-          label: e.label,
-          width: Math.min(((raw.weight as number) || 1) * 2, 5),
-        };
-      })
-      .filter((e) => validNodeIds.has(e.from) && validNodeIds.has(e.to));
-
-    const finalData = { nodes: safeNodes, edges: safeEdges };
-
-    let cancelled = false;
-
-    const renderGraph = async () => {
-      const { Network } = await import("vis-network");
-      if (cancelled) return;
-
-      try {
-        networkRef.current = new Network(containerRef.current!, finalData, {
-          nodes: { shape: "dot", size: 16, font: { size: 12 } },
-          edges: { arrows: "to", font: { size: 10, align: "middle" } },
-          physics: { solver: "forceAtlas2Based" },
-        });
-      } catch (err) {
-        console.error("vis-network 初始化彻底崩溃:", err);
-      }
-    };
-
-    renderGraph();
-
-    return () => {
-      cancelled = true;
-      if (networkRef.current) {
-        networkRef.current.destroy();
-        networkRef.current = null;
-      }
-    };
   }, [data]);
 
   return (
@@ -173,7 +171,14 @@ export function GraphPage() {
         </p>
       )}
 
-      <div ref={containerRef} style={{ flex: 1, border: "1px solid #ddd", borderRadius: 8 }} />
+      <div
+        ref={containerRef}
+        style={{
+          width: "100%",
+          height: "calc(100vh - 120px)",
+          minHeight: "400px",
+        }}
+      />
 
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </div>
