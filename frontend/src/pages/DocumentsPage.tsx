@@ -107,7 +107,7 @@ export function DocumentsPage() {
         <input
           ref={fileRef}
           type="file"
-          accept=".pdf,.md,.txt,.py,.js,.ts,.tsx,.jsx,.go,.rs,.java,.cpp,.c"
+          accept=".pdf,.docx,.doc,.md,.txt,.py,.js,.ts,.tsx,.jsx,.go,.rs,.java,.cpp,.c"
           onChange={handleUpload}
           disabled={uploading}
           hidden

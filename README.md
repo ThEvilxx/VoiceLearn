@@ -1,12 +1,21 @@
 # VoiceLearn — 语音交互式学习伴侣
 
-Upload course notes or papers, then learn by speaking — you ask with your voice, VoiceLearn answers with voice.
+Upload course papers or notes, then learn by speaking — you ask with your voice, VoiceLearn answers with voice.
 
 《智能语音技术》课程作业 — 基于 Vibe Coding 的 Speech 应用创意开发。
 
+## 使用场景
+
+专为**论文阅读与学术文献学习**设计：
+
+1. 下载一篇英文论文 PDF → 上传到 VoiceLearn
+2. 阅读过程中遇到不懂的概念 → 用语音或打字提问
+3. 系统从论文原文中检索答案 → 用你的母语朗读解释，同时保留英文原文引用
+4. 积累多篇论文后 → 跨论文对比、追问细节、构建知识图谱
+
 ## 你可以用它做什么
 
-1. **上传课件/论文**（PDF、Markdown、TXT、源代码）
+1. **上传论文/笔记**（PDF、Word、Markdown、TXT、源代码）
 2. **打字或语音提问** — 点击麦克风说话，或直接打字
 3. **选择回答模式** — 🎧 语音简答（≤100 字口语 + 引导式反问）或 📄 深度长文（Markdown + 详细引用）
 4. **多轮追问** — 系统记住对话历史，支持指代消解（"它和 RNN 有什么区别？"）
@@ -26,7 +35,7 @@ Upload course notes or papers, then learn by speaking — you ask with your voic
 | 🔍 混合 RAG 检索 | Dense (BGE-large-zh-v1.5) + Sparse (BM25) 加权融合；检索前注入知识库文档概览使 LLM 感知完整文档清单；低相关度片段自动过滤 |
 | 🧠 多轮对话记忆 | SQLite 持久化 + sources 跟随存/读 + 10 轮滑动窗口 + LLM Query 改写消解指代词 |
 | 🔊 语音朗读 | edge-tts 中英双语自动检测，TTS 失败时文字仍正常输出 |
-| 📚 文档管理 | 上传/删除，多格式支持，向量自动索引与清理；上传时 spinner + 进度提示 + Toast 通知 |
+| 📚 文档管理 | PDF / Word / Markdown / TXT / 源代码上传删除，向量自动索引与清理；上传时 spinner + 进度提示 + Toast 通知 |
 | 🕸️ 知识图谱 | LLM 自动抽取实体&关系 → vis-network 现代化渲染（圆角节点/平滑边/箭头），文档删后自动清理孤儿节点 |
 | ⚙️ Settings 控制台 | 前端切换 LLM provider（OpenAI-compatible / Claude）、更换 API Key 和 Model |
 | 🚀 生产部署 | `make prod` 单服务模式 — 一个端口 serve 前端 + 全部 API |

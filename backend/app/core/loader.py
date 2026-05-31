@@ -33,6 +33,8 @@ def load_file(file_path: Path | str) -> list[Document]:
 
     if suffix == ".pdf":
         return _load_pdf(path)
+    if suffix in (".docx", ".doc"):
+        return _load_docx(path)
     if suffix in (".md", ".markdown"):
         return _load_text(path, "markdown")
     if suffix in SUPPORTED_SOURCE_EXTS:
@@ -69,6 +71,48 @@ def _load_pdf(path: Path) -> list[Document]:
                     },
                 )
             )
+    return docs
+
+
+def _load_docx(path: Path) -> list[Document]:
+    try:
+        from docx import Document as DocxDocument
+    except ImportError:
+        return []
+
+    try:
+        doc = DocxDocument(str(path))
+    except Exception:
+        return []
+
+    docs: list[Document] = []
+    current_page: list[str] = []
+
+    for para in doc.paragraphs:
+        text = para.text.strip()
+        if not text:
+            if current_page:
+                docs.append(
+                    Document(
+                        page_content="\n".join(current_page),
+                        metadata={
+                            "source": path.name,
+                            "file_type": "docx",
+                        },
+                    )
+                )
+                current_page = []
+            continue
+        current_page.append(text)
+
+    if current_page:
+        docs.append(
+            Document(
+                page_content="\n".join(current_page),
+                metadata={"source": path.name, "file_type": "docx"},
+            )
+        )
+
     return docs
 
 
