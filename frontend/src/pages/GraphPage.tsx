@@ -65,47 +65,58 @@ export function GraphPage() {
 
   // Render knowledge graph using vis-network
   useEffect(() => {
-    if (!containerRef.current || !data || !data.nodes.length) return;
+    // 1. 拦截空状态：没有 DOM 容器或没有节点数据，直接不执行
+    if (!containerRef.current || !data || !data.nodes || data.nodes.length === 0) {
+      return;
+    }
 
+    // 2. 销毁旧实例，防止重入报错
     if (networkRef.current) {
       networkRef.current.destroy();
       networkRef.current = null;
     }
 
-    // Filter ghost edges (source/target pointing to non-existent node IDs)
-    const nodeIds = new Set(data.nodes.map((n) => n.id));
-    const cleanEdges = data.edges.filter(
-      (e) => nodeIds.has(e.source) && nodeIds.has(e.target),
-    );
+    // 3. 暴力清洗节点：强制转换 id/label 为 vis-network 能识别的字符串
+    const safeNodes = data.nodes.map((n) => ({
+      ...n,
+      id: String(n.id),
+      label: String(n.label || n.id || "Unknown"),
+      group: n.type,
+    }));
 
-    // Map backend field names (source/target) to vis-network (from/to)
-    const formattedData = {
-      nodes: data.nodes.map((n) => ({
-        id: n.id,
-        label: n.label,
-        group: n.type,
-      })),
-      edges: cleanEdges.map((e) => ({
-        id: e.id,
-        from: e.source,
-        to: e.target,
-        label: e.label,
-        width: Math.min(e.weight * 2, 5),
-      })),
-    };
+    const validNodeIds = new Set(safeNodes.map((n) => n.id));
+
+    // 4. 暴力清洗连线：强制映射 from/to + 强制过滤幽灵边 + 强制转字符串
+    const safeEdges = (data.edges || [])
+      .map((e) => {
+        const raw = e as unknown as Record<string, unknown>;
+        return {
+          id: raw.id as string,
+          from: String(raw.from || e.source),
+          to: String(raw.to || e.target),
+          label: e.label,
+          width: Math.min(((raw.weight as number) || 1) * 2, 5),
+        };
+      })
+      .filter((e) => validNodeIds.has(e.from) && validNodeIds.has(e.to));
+
+    const finalData = { nodes: safeNodes, edges: safeEdges };
 
     let cancelled = false;
 
     const renderGraph = async () => {
       const { Network } = await import("vis-network");
-
       if (cancelled) return;
 
-      networkRef.current = new Network(containerRef.current!, formattedData, {
-        nodes: { shape: "dot", size: 16, font: { size: 12 } },
-        edges: { arrows: "to", font: { size: 10, align: "middle" } },
-        physics: { solver: "forceAtlas2Based" },
-      });
+      try {
+        networkRef.current = new Network(containerRef.current!, finalData, {
+          nodes: { shape: "dot", size: 16, font: { size: 12 } },
+          edges: { arrows: "to", font: { size: 10, align: "middle" } },
+          physics: { solver: "forceAtlas2Based" },
+        });
+      } catch (err) {
+        console.error("vis-network 初始化彻底崩溃:", err);
+      }
     };
 
     renderGraph();
