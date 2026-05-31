@@ -176,9 +176,6 @@ VoiceLearn/
 │   │   ├── api/client.ts         # REST + SSE 客户端
 │   │   └── types/                # TypeScript 类型
 │   └── ...
-├── docs/
-│   ├── demo.md                        # 课程项目文档
-│   └── pdf-extraction-analysis.md     # PDF 提取能力分析
 ├── start.py                      # 一键启动脚本
 ├── Makefile                      # 构建入口 (可选)
 └── README.md
@@ -221,7 +218,6 @@ Dense（BGE embedding）与 Sparse（BM25）加权融合，默认 7:3。System P
 - 数学公式被渲染为矢量图形，无法从 PDF 文本层提取。直接使用 LaTeX 源码是精准保留公式和代码的唯一路径
 - 部分会议论文的自定义字体可能导致字符映射错误（连字陷阱、乱码）
 - 嵌入在论文中的伪代码/pseudocode 缩进无法保留
-- 详细分析见 [docs/pdf-extraction-analysis.md](docs/pdf-extraction-analysis.md)
 
 ### TTS
 

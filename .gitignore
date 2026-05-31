@@ -12,6 +12,7 @@ frontend/tsconfig.tsbuildinfo
 # Development artifacts (keep locally, don't publish to GitHub)
 CLAUDE.md
 ai-skills-pack/
+docs/
 docs/plans/
 docs/test.md
 docs/test2.md
