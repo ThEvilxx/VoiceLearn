@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 import uuid
 from pathlib import Path
 
 from app.core.loader import load_file, load_url
 from app.core.splitter import split_documents
 from app.core.vector_store import get_vector_store
+
+logger = logging.getLogger(__name__)
 
 
 async def ingest_file(file_path: Path | str, original_name: str) -> dict:
@@ -26,7 +30,12 @@ async def ingest_file(file_path: Path | str, original_name: str) -> dict:
         chunk.metadata["source"] = original_name
 
     store = get_vector_store()
-    store.add_documents(chunks)
+    logger.info(
+        "Ingesting %s: %d chunks, generating embeddings (CPU)…",
+        original_name, len(chunks),
+    )
+    await asyncio.to_thread(store.add_documents, chunks)
+    logger.info("Ingesting %s: embeddings complete.", original_name)
 
     return {
         "status": "ready",
@@ -50,7 +59,9 @@ async def ingest_url(url: str) -> dict:
         chunk.metadata["document_id"] = doc_id
 
     store = get_vector_store()
-    store.add_documents(chunks)
+    logger.info("Ingesting URL %s: %d chunks…", url, len(chunks))
+    await asyncio.to_thread(store.add_documents, chunks)
+    logger.info("Ingesting URL %s: complete.", url)
 
     return {
         "status": "ready",
