@@ -7,6 +7,7 @@ venv/
 # Node
 node_modules/
 frontend/dist/
+frontend/tsconfig.tsbuildinfo
 
 # Data (persisted locally, not committed)
 backend/data/chroma/
